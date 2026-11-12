@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: checkstock
+      POSTGRES_PASSWORD: checkstock
+      POSTGRES_DB: checkstock
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkstock -d checkstock"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkstock:checkstock@db:5432/checkstock
+    depends_on:
+      db:
+        condition: service_healthy
+  test-db:
+    image: postgres:17-alpine
+    profiles: [test]
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: checkstock_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d checkstock_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    tmpfs:
+      - /var/lib/postgresql/data
+  tests:
+    build: .
+    profiles: [test]
+    environment:
+      TEST_DATABASE_URL: postgresql+psycopg://test:test@test-db:5432/checkstock_test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    command: ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+volumes:
+  pgdata:

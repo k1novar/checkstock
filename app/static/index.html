@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CheckStock — где сейчас товар</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="CheckStock"
+        ><span class="brand-icon">▦</span> checkstock<span class="dot"
+          >.</span
+        ></a
+      >
+      <div class="workspace">
+        <span class="avatar">Д</span>
+        <div>Демо-магазин<small>Управление запасами</small></div>
+      </div>
+      <p class="nav-label">РАБОЧЕЕ ПРОСТРАНСТВО</p>
+      <nav>
+        <button class="active" data-tab="stock">▦ <span>Остатки</span></button
+        ><button data-tab="operations">
+          ⇄ <span>Отправки и резервы</span><b id="op-count">0</b></button
+        ><button data-tab="warehouses">⌂ <span>Склады</span></button
+        ><button data-tab="history">◷ <span>История операций</span></button>
+      </nav>
+      <div class="side-bottom">
+        <span class="online"></span> Один магазин · все склады<small
+          >CheckStock / тестовый прототип</small
+        >
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div class="breadcrumb">
+          Рабочее пространство <span>/</span> <b id="breadcrumb">Остатки</b>
+        </div>
+        <button id="refresh" class="subtle">↻ Обновить</button>
+      </header>
+      <div class="page">
+        <div class="title-row">
+          <div>
+            <div class="eyebrow">УЧЁТ БЕЗ СЛЕПЫХ ЗОН</div>
+            <h1 id="page-title">Где сейчас товар?</h1>
+            <p id="page-description">
+              Остатки на фулфилментах, резервы и товары в пути — в одном месте.
+            </p>
+          </div>
+          <button class="primary" id="new-operation">＋ Новая операция</button>
+        </div>
+        <div id="notice" role="status" aria-live="polite" hidden></div>
+        <section id="tab-stock">
+          <div id="metrics" class="metrics"></div>
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  Остатки по артикулам
+                  <span id="product-count" class="badge"></span>
+                </h2>
+                <p>Доступно = физически на ФФ − резерв FBS</p>
+              </div>
+              <label class="search"
+                ><span>⌕</span
+                ><input
+                  id="search"
+                  type="search"
+                  placeholder="Артикул или название"
+                  aria-label="Поиск товара"
+              /></label>
+            </div>
+            <div class="table-scroll"><table id="stock-table"></table></div>
+            <div class="table-footer">
+              <span><i class="legend available"></i> Доступно к отгрузке</span
+              ><span><i class="legend reserved"></i> Зарезервировано FBS</span
+              ><span id="reconciliation"></span>
+            </div>
+          </div>
+          <div class="section-heading">
+            <h2>Товары в пути</h2>
+            <span>Не входят в физический остаток ФФ</span>
+          </div>
+          <div id="transit-cards" class="transit-cards"></div>
+          <div class="panel small-panel">
+            <h2>После приёмки</h2>
+            <p>
+              Принятый FBO учитывается на маркетплейсе; доставленный FBS — у
+              клиента.
+            </p>
+            <div id="final-stock"></div>
+          </div>
+        </section>
+        <section id="tab-operations" hidden>
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Отправки и резервы</h2>
+                <p>Каждое подтверждение меняет учёт только один раз.</p>
+              </div>
+              <select id="operation-filter" aria-label="Фильтр операций">
+                <option value="active">Активные</option>
+                <option value="all">Все операции</option>
+              </select>
+            </div>
+            <div class="table-scroll"><table id="operation-table"></table></div>
+          </div>
+        </section>
+        <section id="tab-warehouses" hidden>
+          <div class="section-heading">
+            <h2>Фулфилменты</h2>
+            <button class="primary" id="add-warehouse">＋ Добавить ФФ</button>
+          </div>
+          <div class="info">
+            Удаление переводит ФФ в архив. Остатки, резервы и история
+            сохраняются. С архивного ФФ можно вывезти доступный товар.
+          </div>
+          <div id="warehouse-cards" class="warehouse-cards"></div>
+        </section>
+        <section id="tab-history" hidden>
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>История операций</h2>
+                <p>
+                  Время отображается в часовом поясе вашего браузера. Названия
+                  сохранены на момент действия.
+                </p>
+              </div>
+            </div>
+            <div class="table-scroll"><table id="history-table"></table></div>
+          </div>
+        </section>
+        <footer><span>CHECKSTOCK</span> Каждая единица на своём месте.</footer>
+      </div>
+    </main>
+    <dialog id="dialog">
+      <form id="command-form">
+        <div class="dialog-head">
+          <div>
+            <div class="eyebrow">УПРАВЛЕНИЕ ЗАПАСАМИ</div>
+            <h2 id="dialog-title">Новая операция</h2>
+          </div>
+          <button
+            type="button"
+            id="close-dialog"
+            class="close"
+            aria-label="Закрыть"
+          >
+            ×
+          </button>
+        </div>
+        <div id="form-fields"></div>
+        <div id="form-error" role="alert" hidden></div>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-dialog">Отмена</button
+          ><button type="submit" class="primary" id="submit-command">
+            Подтвердить
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
