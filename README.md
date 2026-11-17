@@ -1,5 +1,7 @@
 # CheckStock
 
+[![CI](https://github.com/k1novar/checkstock/actions/workflows/ci.yml/badge.svg)](https://github.com/k1novar/checkstock/actions/workflows/ci.yml)
+
 Веб-прототип для тестового задания «Где сейчас товар?». Python 3.12, FastAPI, PostgreSQL 17, SQLAlchemy 2; интерфейс на HTML/CSS/JavaScript без сборщика и CDN. Один магазин, три тестовых артикула, два ФФ. Интерфейс и сообщения на русском.
 
 ## Быстрый запуск
